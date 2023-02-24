@@ -1,7 +1,11 @@
 ---
 # defaults file for ansible-users-role
+
 # miniconda installation directory
 miniconda_installation_dir: /usr/local/anaconda
+
+# specify root keys here
+root_keys: []
 
 # default users values: set users that need to be defined in the system
 # in group_vars in this way

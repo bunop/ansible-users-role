@@ -1,9 +1,21 @@
 ---
+# adding keys
+- name: Add user ssh keys
+  lineinfile:
+    path: "/root/.ssh/authorized_keys"
+    line: "{{ item }}"
+  with_items:
+    - "{{ root_keys }}"
+  tags:
+    - users
+    - configure
+
 # install dotfiles for root
 - import_tasks: dotfiles.yml
   vars:
     dotfiles_user: root
     dotfiles_version: root
+    dotfiles_dest: "~{{ dotfiles_user }}/dotfiles"
   tags:
     - users
     - configure
