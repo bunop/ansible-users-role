@@ -98,6 +98,7 @@
 - include_tasks: dotfiles.yml
   vars:
     dotfiles_user: "{{ outer_item.name }}"
+    dotfiles_dest: "~{{ outer_item.name }}/dotfiles"
   with_items: "{{ users }}"
   when: outer_item.dotfiles is defined and outer_item.dotfiles is true
   # don't use item name, since it's used in dotfiles tasks
