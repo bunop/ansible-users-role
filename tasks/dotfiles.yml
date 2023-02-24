@@ -1,0 +1,82 @@
+---
+- name: Get user info
+  getent:
+    database: passwd
+  tags: ['dotfiles']
+
+- name: "install '{{ dotfiles_version }}' dotfiles from git for '{{ dotfiles_user }}'"
+  become: True
+  become_user: "{{ dotfiles_user }}"
+  git:
+    repo: https://github.com/bunop/dotfiles.git
+    dest: "~{{ dotfiles_user }}/dotfiles"
+    version: "{{ dotfiles_version }}"
+    # just ensuring the repo checkout exists
+    update: no
+  when:
+    - "dotfiles_user in getent_passwd.keys()"
+  tags: ['dotfiles']
+
+- name: test if dotfiles is installed
+  stat:
+    path: "~{{ dotfiles_user }}/dotfiles"
+  register: dotfiles
+  tags: ['dotfiles']
+
+- name: "test for {{ dotfiles_user }} config files"
+  stat:
+    path: "~{{ dotfiles_user }}/.{{ item }}"
+  register: bash_config
+  tags: ['dotfiles']
+  loop:
+    - bash_aliases
+    - bash_logout
+    - bashrc
+    - docker_aliases
+    - profile
+
+# - debug:
+#     # msg: "Path: {{ item.stat.path }}"
+#     var: item
+#   tags: ['dotfiles']
+#   loop: "{{ bash_config.results }}"
+
+- name: "remove old configuration files for {{ dotfiles_user }}"
+  become: True
+  become_user: "{{ dotfiles_user }}"
+  file:
+    path: "{{ item.stat.path }}"
+    state: absent
+  when: dotfiles.stat.exists and item.stat.exists and not item.stat.islnk
+  loop: "{{ bash_config.results }}"
+  tags: ['dotfiles']
+
+# create symlink if the src path exists
+- name: "link to bash configuration files for {{ dotfiles_user }}"
+  become: True
+  become_user: "{{ dotfiles_user }}"
+  file:
+    src: "~{{ dotfiles_user }}/dotfiles/bash/{{ item }}"
+    dest: "~{{ dotfiles_user }}/.{{ item }}"
+    state: link
+  loop:
+    - bash_aliases
+    - bash_logout
+    - bashrc
+    - docker_aliases
+    - profile
+  when: dotfiles.stat.exists
+  tags: ['dotfiles']
+
+- name: "link to other configuration files for {{ dotfiles_user }}"
+  become: True
+  become_user: "{{ dotfiles_user }}"
+  file:
+    src: "~{{ dotfiles_user }}/dotfiles/{{ item.path }}/{{ item.file }}"
+    dest: "~{{ dotfiles_user}}/.{{ item.file }}"
+    state: link
+  loop:
+    - { path: 'tmux', file: 'tmux.conf' }
+    - { path: 'git', file: 'gitconfig' }
+  when: dotfiles.stat.exists
+  tags: ['dotfiles']

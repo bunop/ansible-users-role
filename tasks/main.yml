@@ -1,2 +1,11 @@
 ---
 # tasks file for ansible-users-role
+
+# install for root user
+- import_tasks: root.yml
+
+# install all other users
+- import_tasks: users.yml
+  when:
+    - users is defined
+    - users|length > 0

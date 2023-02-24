@@ -1,0 +1,9 @@
+---
+# install dotfiles for root
+- import_tasks: dotfiles.yml
+  vars:
+    dotfiles_user: root
+    dotfiles_version: root
+  tags:
+    - users
+    - configure

@@ -1,0 +1,125 @@
+---
+- name: add miniconda profile to /etc/profile.d
+  with_items:
+    - f: miniconda.sh
+      d: /etc/profile.d
+  template:
+    src: '{{ item.f }}.j2'
+    dest: '{{ item.d }}/{{ item.f }}'
+    mode: '{{ item.m|default("0644") }}'
+  tags:
+    - users
+    - configure
+
+- name: add users to the system
+  user:
+    name: "{{ item.name }}"
+    shell: /bin/bash
+  with_items: "{{ users }}"
+  tags:
+    - users
+    - configure
+
+- name: add custom groups to the system
+  group:
+    name: "{{ item }}"
+    state: present
+  with_items: "{{ custom_groups }}"
+
+- name: create shared directory for custom groups
+  file:
+    path: "/home/{{ item }}"
+    state: directory
+    # http://terokarvinen.com/2011/shared-folder-with-chmod-setgid/
+    mode: "g+ws"
+    group: "{{ item }}"
+  with_items: "{{ custom_groups }}"
+
+- name: Get all groups
+  getent:
+    database: group
+    split: ':'
+
+# https://stackoverflow.com/a/50711744/4385116
+# iterate on a nested dictionary
+# - name: adding users to group
+#   debug:
+#     msg: "{{ item.0.key }} {{ item.1 }}"
+#   loop: "{{ user_groups | dict2items | subelements('value') }}"
+
+- name: add users to groups
+  user:
+    name: "{{ item.1 }}"
+    groups: "{{ item.0.key }}"
+    append: yes
+  loop: "{{ user_groups | dict2items | subelements('value') }}"
+  when:
+    # add a user to group only if group exists (solve --check step)
+    - item.0.key in getent_group.keys()
+  tags:
+    - users
+    - configure
+
+- name: Get users info
+  getent:
+    database: passwd
+  tags:
+    - users
+    - configure
+
+- name: Create users .ssh folder
+  file:
+    path: "~{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: 0700
+  with_items: "{{ users }}"
+  tags:
+    - users
+    - configure
+
+- name: Add users ssh keys
+  lineinfile:
+    path: "~{{ item.0.name }}/.ssh/authorized_keys"
+    line: "{{ item.1 }}"
+    # create file if not exists with the correct permissions
+    create: yes
+    owner: "{{ item.0.name }}"
+    group: "{{ item.0.name }}"
+    mode: 0600
+  with_subelements:
+    - "{{ users }}"
+    - ssh-keys
+  tags:
+    - users
+    - configure
+
+# execute stuff to configure dotfiles
+- include_tasks: dotfiles.yml
+  vars:
+    dotfiles_user: "{{ outer_item.name }}"
+  with_items: "{{ users }}"
+  when: outer_item.dotfiles is defined and outer_item.dotfiles is true
+  tags:
+    - users
+    - configure
+  # don't use item name, since it's used in dotfiles tasks
+  loop_control:
+    loop_var: outer_item
+
+# don't initialize conda if already activated
+- name: activate conda environment for all users
+  shell: |
+    {{ miniconda_installation_dir }}/bin/conda init bash
+    touch ~{{ item.name }}/.ansible/conda_activated
+  args:
+    creates: "~{{ item.name }}/.ansible/conda_activated"
+  become: True
+  become_user: "{{ item.name }}"
+  when:
+    - item.name in getent_passwd.keys()
+  with_items: "{{ users }}"
+  tags:
+    - users
+    - configure
