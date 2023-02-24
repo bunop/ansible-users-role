@@ -1,0 +1,54 @@
+---
+- name: add miniconda profile to /etc/profile.d
+  with_items:
+    - f: miniconda.sh
+      d: /etc/profile.d
+  template:
+    src: '{{ item.f }}.j2'
+    dest: '{{ item.d }}/{{ item.f }}'
+    mode: '{{ item.m|default("0644") }}'
+  tags:
+    - users
+    - configure
+    - conda_configure
+
+- name: Get users info
+  getent:
+    database: passwd
+  tags:
+    - users
+    - configure
+    - conda_configure
+
+# don't initialize conda if already activated
+- name: activate conda environment for all users
+  shell: |
+    {{ miniconda_installation_dir }}/bin/conda init bash
+    touch ~{{ item.name }}/.ansible/conda_activated
+  args:
+    creates: "~{{ item.name }}/.ansible/conda_activated"
+  become: True
+  become_user: "{{ item.name }}"
+  when:
+    - item.name in getent_passwd.keys()
+  with_items: "{{ users }}"
+  tags:
+    - users
+    - configure
+    - conda_configure
+
+- name: replace conda executable path
+  ansible.builtin.replace:
+    path: "~{{ item.name }}/.bashrc"
+    after: "conda initialize"
+    regexp: "Miniconda3-py[0-9]+_[0-9]+.[0-9]+.[0-9]+-Linux-x86_64"
+    replace: "anaconda"
+  become: True
+  become_user: "{{ item.name }}"
+  when:
+    - item.name in getent_passwd.keys()
+  with_items: "{{ users }}"
+  tags:
+    - users
+    - configure
+    - conda_configure

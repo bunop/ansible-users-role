@@ -9,3 +9,14 @@
   when:
     - users is defined
     - users|length > 0
+
+# check and install miniconda
+- name: check for installation of Miniconda
+  become: '{{ miniconda_escalate }}'
+  stat:
+    path: '{{  miniconda_conda_bin  }}'
+  changed_when: false
+  register: miniconda_conda_binary
+
+- import_tasks: miniconda.yml
+  when: miniconda_conda_binary.stat.exists
