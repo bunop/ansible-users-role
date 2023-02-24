@@ -7,7 +7,7 @@
   with_items:
     - "{{ root_keys }}"
   tags:
-    - users
+    - root_user
     - configure
 
 # install dotfiles for root
@@ -17,5 +17,5 @@
     dotfiles_version: root
     dotfiles_dest: "~{{ dotfiles_user }}/dotfiles"
   tags:
-    - users
+    - root_user
     - configure
