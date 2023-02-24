@@ -34,6 +34,8 @@
     - bashrc
     - docker_aliases
     - profile
+    - gitconfig
+    - tmux.conf
 
 # - debug:
 #     # msg: "Path: {{ item.stat.path }}"
@@ -44,9 +46,7 @@
 - name: "remove old configuration files for {{ dotfiles_user }}"
   become: True
   become_user: "{{ dotfiles_user }}"
-  file:
-    path: "{{ item.stat.path }}"
-    state: absent
+  command: "mv {{ item.stat.path }} {{ item.stat.path }}.bak"
   when: dotfiles.stat.exists and item.stat.exists and not item.stat.islnk
   loop: "{{ bash_config.results }}"
   tags: ['dotfiles']
@@ -56,7 +56,7 @@
   become: True
   become_user: "{{ dotfiles_user }}"
   file:
-    src: "~{{ dotfiles_user }}/dotfiles/bash/{{ item }}"
+    src: "{{ dotfiles_dest }}/bash/{{ item }}"
     dest: "~{{ dotfiles_user }}/.{{ item }}"
     state: link
   loop:
