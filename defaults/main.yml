@@ -3,6 +3,7 @@
 
 # miniconda installation directory
 miniconda_installation_dir: /usr/local/anaconda
+miniconda_conda_bin: "{{ miniconda_installation_dir }}/bin"
 
 # specify root keys here
 root_keys: []

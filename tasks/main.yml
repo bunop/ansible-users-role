@@ -12,7 +12,6 @@
 
 # check and install miniconda
 - name: check for installation of Miniconda
-  become: '{{ miniconda_escalate }}'
   stat:
     path: '{{  miniconda_conda_bin  }}'
   changed_when: false
