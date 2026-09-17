@@ -2,7 +2,7 @@
 # adding keys
 - name: Add user ssh keys
   lineinfile:
-    path: "/root/.ssh/authorized_keys"
+    path: "{{ root_keys_path }}"
     line: "{{ item }}"
   with_items:
     - "{{ root_keys }}"

@@ -8,6 +8,9 @@ miniconda_conda_bin: "{{ miniconda_installation_dir }}/bin"
 # specify root keys here
 root_keys: []
 
+# path of the authorized_keys file used for root_keys
+root_keys_path: /root/.ssh/authorized_keys
+
 # default users values: set users that need to be defined in the system
 # in group_vars in this way
 # users:
