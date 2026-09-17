@@ -1,38 +1,87 @@
-Role Name
-=========
+ansible-users-role
+===================
 
-A brief description of the role goes here.
+Manages system users, groups, root/user SSH keys, dotfiles and (optionally) per-user
+Conda environment activation. Root and every listed user get their own `authorized_keys`
+and can opt in to [bunop/dotfiles](https://github.com/bunop/dotfiles) via symlinks.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+None beyond a Debian/Ubuntu-based target. If Conda-related tasks should run, Conda must
+already be installed at `miniconda_installation_dir` (e.g. via
+[galaxyproject.miniconda](https://github.com/galaxyproject/ansible-role-galaxy-miniconda)) —
+the role detects this automatically and skips those tasks otherwise.
 
 Role Variables
---------------
+---------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+Defined in `defaults/main.yml`:
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `root_keys` | `[]` | List of public SSH keys to add for the `root` user |
+| `root_keys_path` | `/root/.ssh/authorized_keys` | Destination file for `root_keys`; override for setups with a different root-key mechanism (e.g. a cluster-wide path) |
+| `users` | `[]` | List of user accounts to create, each `{name, ssh-keys: [...], dotfiles: true/false}` |
+| `custom_groups` | `[]` | List of extra group names to create, each with a shared `g+ws` `/home/<group>` directory |
+| `user_groups` | `{}` | Maps a group name to the list of users appended to it (group must already exist) |
+| `dotfiles_version` | `ubuntu` | Branch of `bunop/dotfiles` checked out for users with `dotfiles: true` |
+| `miniconda_installation_dir` | `/usr/local/anaconda` | Path where Conda is installed; must match the value used to install Conda |
+| `miniconda_conda_bin` | `{{ miniconda_installation_dir }}/bin` | Used to detect whether Conda is installed before running Conda-related tasks |
+
+Example user entry:
+
+```yaml
+users:
+  - name: alice
+    ssh-keys:
+      - ssh-ed25519 AAAA... alice@laptop
+    dotfiles: true
+```
+
+Additional information
+-----------------------
+
+- Root gets its SSH keys and, unconditionally, the `root` dotfiles from
+  `tasks/root.yml`.
+- Every entry in `users` gets its account, `.ssh` folder and SSH keys from
+  `tasks/users.yml`; dotfiles are only installed when `dotfiles: true` is set on
+  that user.
+- `custom_groups` and `user_groups` let you create extra groups (with a shared,
+  setgid `/home/<group>` directory) and attach existing users to them.
+- Conda tasks (`tasks/miniconda.yml`) only run when a `conda`/`mamba` binary is found
+  under `miniconda_conda_bin`; they add a `/etc/profile.d` snippet and run
+  `conda init bash` once per user (root included).
 
 Dependencies
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+None.
 
 Example Playbook
-----------------
+-----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+```yaml
+- hosts: servers
+  roles:
+    - role: users
+      tags: users_role
+      vars:
+        root_keys:
+          - ssh-ed25519 AAAA... admin@workstation
+        users:
+          - name: alice
+            ssh-keys:
+              - ssh-ed25519 AAAA... alice@laptop
+            dotfiles: true
+```
 
 License
 -------
 
-BSD
+MIT
 
 Author Information
-------------------
+-------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Paolo Cozzi ([@bunop](https://github.com/bunop))
