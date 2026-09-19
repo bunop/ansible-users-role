@@ -1,6 +1,15 @@
 ---
 # tasks file for ansible-users-role
 
+# root.yml and users.yml both use become_user (dotfiles, .ssh setup). Ansible needs
+# setfacl (not plain chmod) to grant a become_user with no shared group access to its
+# temp files, otherwise become fails with a chmod ACL syntax error on a fresh host.
+- name: Install acl for become_user support
+  apt:
+    name: acl
+    update_cache: yes
+    cache_valid_time: 3600
+
 # install for root user
 - import_tasks: root.yml
 
