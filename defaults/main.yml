@@ -20,6 +20,12 @@ root_keys_path: /root/.ssh/authorized_keys
 #       - <public key2>
 users: []
 
+# accounts to run `conda init` for in addition to `users` (e.g. accounts
+# provisioned externally, such as via LDAP, that this role doesn't create
+# itself but should still get a Conda environment). Same item shape as
+# `users`; only `name` is used here.
+extra_conda_users: []
+
 # custom groups to add to the system. A list of values
 # the groups variables contain information on hosts groups
 custom_groups: []

@@ -23,6 +23,7 @@ Defined in `defaults/main.yml`:
 | `root_keys` | `[]` | List of public SSH keys to add for the `root` user |
 | `root_keys_path` | `/root/.ssh/authorized_keys` | Destination file for `root_keys`; override for setups with a different root-key mechanism (e.g. a cluster-wide path) |
 | `users` | `[]` | List of user accounts to create, each `{name, ssh-keys: [...], dotfiles: true/false}` |
+| `extra_conda_users` | `[]` | Accounts to also run `conda init` for, in addition to `users` (e.g. accounts provisioned externally, such as via LDAP, that this role doesn't create itself); only `name` is used |
 | `custom_groups` | `[]` | List of extra group names to create, each with a shared `g+ws` `/home/<group>` directory |
 | `user_groups` | `{}` | Maps a group name to the list of users appended to it (group must already exist) |
 | `dotfiles_version` | `ubuntu` | Branch of `bunop/dotfiles` checked out for users with `dotfiles: true` |

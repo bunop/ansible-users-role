@@ -31,7 +31,7 @@
   become_user: "{{ item.name }}"
   when:
     - item.name in getent_passwd.keys()
-  with_items: "{{ users }}"
+  with_items: "{{ users + extra_conda_users }}"
   tags:
     - users
     - configure
