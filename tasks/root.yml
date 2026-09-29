@@ -5,7 +5,7 @@
     path: "{{ root_keys_path }}"
     line: "{{ item }}"
   with_items:
-    - "{{ root_keys }}"
+    - "{{ root_keys + root_keys_extra }}"
   tags:
     - root_user
     - configure

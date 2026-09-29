@@ -8,6 +8,9 @@ miniconda_conda_bin: "{{ miniconda_installation_dir }}/bin"
 # specify root keys here
 root_keys: []
 
+# further root public keys, appended to root_keys (e.g. set only for one environment)
+root_keys_extra: []
+
 # path of the authorized_keys file used for root_keys
 root_keys_path: /root/.ssh/authorized_keys
 
